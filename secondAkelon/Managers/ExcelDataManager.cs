@@ -11,11 +11,11 @@ namespace secondAkelon.Managers
 {
     public class ExcelDataManager
     {
-        public List<Order> Orders = new List<Order>();
+        public List<Models.Order> Orders = new List<Models.Order>();
         public List<Customer> Customers = new List<Customer>();
         public List<Product> Products = new List<Product>();
 
-        public ExcelDataManager(string excelPath) 
+        public ExcelDataManager(string excelPath)
         {
             using (var workbook = new XLWorkbook(excelPath))
             {
@@ -23,7 +23,7 @@ namespace secondAkelon.Managers
                 var worksheet = workbook.Worksheet(3);
                 foreach (var row in worksheet.RowsUsed().Skip(1))
                 {
-                    Orders.Add(new Order
+                    Orders.Add(new Models.Order
                     {
                         Id = row.Cell(1).GetValue<int>(),
                         ProductId = row.Cell(2).GetValue<int>(),
@@ -83,9 +83,32 @@ namespace secondAkelon.Managers
             }
         }
 
-        public void UpdateCustomer(string productName)
+        public void UpdateCustomerContact(string contactString, string excelPath)
         {
+            var nameCompany = contactString.Split('"')[1];
+            var nameContact = contactString.Split('"')[2].Trim();
 
+            var obj = Customers.FirstOrDefault(x => x.Name == nameCompany);
+
+            if (obj != null)
+            {
+                int index = Customers.IndexOf(obj);
+                obj.ContactName = nameContact;
+
+                using (var workbook = new XLWorkbook(excelPath))
+                {
+                    //Заявки
+
+                    var worksheet = workbook.Worksheet(2);
+                    worksheet.Cell("D" + (index + 2)).Value = nameContact;
+                    workbook.SaveAs(excelPath);
+                }
+                Console.WriteLine("Изменения успешно сохранены!");
+            }
+            else
+            {
+                Console.WriteLine("Вы ввели неизвестную компанию, попробуйте еще раз");
+            }
         }
     }
 }
