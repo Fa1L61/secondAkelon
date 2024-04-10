@@ -61,78 +61,113 @@ namespace secondAkelon.Managers
         }
         public void CustomerInfo(string productName)
         {
-            var productInfo = Products.Where(i => i.Name == productName.ToLower()).First();
-            var ordersInfo = Orders.Where(i => i.ProductId == productInfo.Id).ToList();
-
-            var customers = new List<Customer>();
-            foreach (var order in ordersInfo)
+            try
             {
-                customers.Add(Customers.Where(i => i.Id == order.CustomerId).First());
+                var productInfo = Products.Where(i => i.Name == productName.ToLower()).First();
+                var ordersInfo = Orders.Where(i => i.ProductId == productInfo.Id).ToList();
+
+                var customers = new List<Customer>();
+                foreach (var order in ordersInfo)
+                {
+                    customers.Add(Customers.Where(i => i.Id == order.CustomerId).First());
+                }
+
+                Console.WriteLine($"Клиенты, заказавшие {productName.ToLower()}:\n");
+                for (int i = 0; i < customers.Count; i++)
+                {
+                    Console.WriteLine($"{customers[i].Name}.\nДоставка по адресу: {customers[i].Address}.\nКонтактное лицо: {customers[i].ContactName}");
+                    Console.WriteLine($"Требуемое количество: {ordersInfo[i].Count} {productInfo.Unit}");
+                    Console.WriteLine($"Стоимость за единицу: {productInfo.Cost} Руб.");
+                    Console.WriteLine($"Общая сумма заказа: {productInfo.Cost * ordersInfo[i].Count} Руб.");
+                    Console.WriteLine($"Дата заказа: {ordersInfo[i].OrderDate}\n");
+                }
             }
-
-            Console.WriteLine($"Клиенты, заказавшие {productName.ToLower()}:\n");
-            for (int i = 0; i < customers.Count; i++)
+            catch
             {
-                Console.WriteLine($"{customers[i].Name}.\nДоставка по адресу: {customers[i].Address}.\nКонтактное лицо: {customers[i].ContactName}");
-                Console.WriteLine($"Требуемое количество: {ordersInfo[i].Count} {productInfo.Unit}");
-                Console.WriteLine($"Стоимость за единицу: {productInfo.Cost} Руб.");
-                Console.WriteLine($"Общая сумма заказа: {productInfo.Cost * ordersInfo[i].Count} Руб.");
-                Console.WriteLine($"Дата заказа: {ordersInfo[i].OrderDate}");
-
-                Console.WriteLine();
+                Console.WriteLine("\nВы ввели неизвестный товар.\n");
             }
         }
 
         public void UpdateCustomerContact(string contactString, string excelPath)
         {
-            var nameCompany = contactString.Split('"')[1];
-            var nameContact = contactString.Split('"')[2].Trim();
-
-            var obj = Customers.FirstOrDefault(x => x.Name == nameCompany);
-
-            if (obj != null)
+            try
             {
-                int index = Customers.IndexOf(obj);
-                obj.ContactName = nameContact;
+                var nameCompany = contactString.Split('"')[1];
+                var nameContact = contactString.Split('"')[2].Trim();
 
-                using (var workbook = new XLWorkbook(excelPath))
+                var obj = Customers.FirstOrDefault(x => x.Name == nameCompany);
+
+                if (obj != null)
                 {
-                    var worksheet = workbook.Worksheet(2);
-                    worksheet.Cell("D" + (index + 2)).Value = nameContact;
-                    workbook.SaveAs(excelPath);
+                    int index = Customers.IndexOf(obj);
+                    obj.ContactName = nameContact;
+
+                    using (var workbook = new XLWorkbook(excelPath))
+                    {
+                        var worksheet = workbook.Worksheet(2);
+                        worksheet.Cell("D" + (index + 2)).Value = nameContact;
+                        workbook.SaveAs(excelPath);
+                    }
+                    Console.WriteLine("\nИзменения успешно сохранены!\n");
                 }
-                Console.WriteLine("Изменения успешно сохранены!");
+                else
+                {
+                    Console.WriteLine("\nВы ввели неизвестную компанию, попробуйте еще раз\n");
+
+                }
             }
-            else
+            catch
             {
-                Console.WriteLine("Вы ввели неизвестную компанию, попробуйте еще раз");
+                Console.WriteLine("\nНеверный формат ввода\n");
             }
         }
-        public void TopCustomer(int year, int month = 0)
+        public void TopCustomer(string date)
         {
-            if (month == 0)
-            {
-                var topCustomer = Orders
-                   .Where(o => o.OrderDate.Year == year)
-                   .GroupBy(o => o.CustomerId)
-                   .OrderByDescending(g => g.Count())
-                   .First()
-                   .Select(o => o.CustomerId)
-                   .FirstOrDefault();
+            int month = 0;
+            int year = 0;
 
-                Console.WriteLine(topCustomer);
+            if (date.Contains('.'))
+            {
+                month = int.Parse(date.Split(".")[0]);
+                year = int.Parse(date.Split(".")[1]);
             }
             else
             {
-                var topCustomer = Orders
-                    .Where(o => o.OrderDate.Year == year && o.OrderDate.Month == month)
-                    .GroupBy(o => o.CustomerId)
-                    .OrderByDescending(g => g.Count())
-                    .First()
-                    .Select(o => o.CustomerId)
-                    .FirstOrDefault();
+                year = int.Parse(date);
+            }
 
-                Console.WriteLine(topCustomer);
+            try
+            {
+                if (month == 0)
+                {
+                    var topOrders = Orders
+                       .Where(o => o.OrderDate.Year == year)
+                       .GroupBy(o => o.CustomerId)
+                       .OrderByDescending(g => g.Count())
+                       .First();
+
+                    var goldCustomer = Customers.Where(c => c.Id == topOrders.Key).First();
+
+                    Console.WriteLine($"\nЗолотой клиент: {goldCustomer.Id} \"{goldCustomer.Name}\". Контактное лицо: {goldCustomer.ContactName}");
+                    Console.WriteLine($"За год сделано {topOrders.Count()} заказов\n");
+                }
+                else
+                {
+                    var topOrders = Orders
+                        .Where(o => o.OrderDate.Year == year && o.OrderDate.Month == month)
+                        .GroupBy(o => o.CustomerId)
+                        .OrderByDescending(g => g.Count())
+                        .First();
+
+                    var goldCustomer = Customers.Where(c => c.Id == topOrders.Key).First();
+
+                    Console.WriteLine($"\nЗолотой клиент: {goldCustomer.Id} \"{goldCustomer.Name}\". Контактное лицо: {goldCustomer.ContactName}");
+                    Console.WriteLine($"За месяц сделано {topOrders.Count()} заказов\n");
+                }
+            }
+            catch
+            {
+                Console.WriteLine("\nВ данном периоде нет золотых клиентов :(\n");
             }
         }
     }
