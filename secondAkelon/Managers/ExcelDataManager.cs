@@ -97,8 +97,6 @@ namespace secondAkelon.Managers
 
                 using (var workbook = new XLWorkbook(excelPath))
                 {
-                    //Заявки
-
                     var worksheet = workbook.Worksheet(2);
                     worksheet.Cell("D" + (index + 2)).Value = nameContact;
                     workbook.SaveAs(excelPath);
@@ -108,6 +106,33 @@ namespace secondAkelon.Managers
             else
             {
                 Console.WriteLine("Вы ввели неизвестную компанию, попробуйте еще раз");
+            }
+        }
+        public void TopCustomer(int year, int month = 0)
+        {
+            if (month == 0)
+            {
+                var topCustomer = Orders
+                   .Where(o => o.OrderDate.Year == year)
+                   .GroupBy(o => o.CustomerId)
+                   .OrderByDescending(g => g.Count())
+                   .First()
+                   .Select(o => o.CustomerId)
+                   .FirstOrDefault();
+
+                Console.WriteLine(topCustomer);
+            }
+            else
+            {
+                var topCustomer = Orders
+                    .Where(o => o.OrderDate.Year == year && o.OrderDate.Month == month)
+                    .GroupBy(o => o.CustomerId)
+                    .OrderByDescending(g => g.Count())
+                    .First()
+                    .Select(o => o.CustomerId)
+                    .FirstOrDefault();
+
+                Console.WriteLine(topCustomer);
             }
         }
     }
