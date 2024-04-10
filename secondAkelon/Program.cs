@@ -1,13 +1,4 @@
-﻿using System;
-using System.IO;
-using ClosedXML;
-using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Bibliography;
-using DocumentFormat.OpenXml.Drawing.Charts;
-using DocumentFormat.OpenXml.ExtendedProperties;
-using DocumentFormat.OpenXml.Spreadsheet;
-using secondAkelon.Managers;
-using secondAkelon.Models;
+﻿using secondAkelon.Managers;
 
 namespace ConsoleApp
 {
